@@ -1,0 +1,11 @@
+# API keys & secrets
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
