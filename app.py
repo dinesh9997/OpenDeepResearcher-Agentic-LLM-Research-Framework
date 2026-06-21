@@ -15,7 +15,8 @@ defaults = {
     "writer_done": False,
     "writer_running": False,
     "current_view": "none",
-    "theme": "dark"
+    "theme": "dark",
+    "export_expanded": False
 }
 for k, v in defaults.items():
     st.session_state.setdefault(k, v)
@@ -131,17 +132,62 @@ div[data-testid="stTextInput"] input:focus {{
 
 .stButton > button {{
     background-color: {BTN_BG};
-    border: 1px solid {BORDER};
+    border: 2px solid {BORDER};
     color: {TEXT};
     transition: transform 0.15s ease;
     font-family: 'Poppins', sans-serif;
-
+    border-radius: 8px;
+    font-weight: 500;
+    min-height: 44px;
 }}
 
 .stButton > button:hover {{
     transform: scale(1.03);
     font-family: 'Poppins', sans-serif;
+    box-shadow: 0 0 12px {BORDER}44;
+}}
 
+/* ===== EXPORT SECTION ===== */
+.export-card {{
+    background-color: {CARD};
+    border: 1px solid {BORDER};
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-top: 24px;
+}}
+
+.export-title {{
+    font-family: 'Poppins', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: {TEXT};
+}}
+
+.export-buttons {{
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}}
+
+/* Style download buttons */
+.stDownloadButton > button {{
+    background-color: {BTN_BG} !important;
+    border: 2px solid {BORDER} !important;
+    color: {TEXT} !important;
+    border-radius: 8px !important;
+    padding: 10px 24px !important;
+    font-family: 'Poppins', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease !important;
+    width: 100% !important;
+    letter-spacing: 0.5px !important;
+}}
+
+.stDownloadButton > button:hover {{
+    transform: scale(1.04) !important;
+    box-shadow: 0 0 12px {BORDER}66 !important;
 }}
 
 </style>
@@ -225,127 +271,90 @@ with st.container():
             unsafe_allow_html=True
         )
 
-        st.markdown("### 📤 Export Report")
-
-        export_format = st.selectbox(
-            "Choose format",
-            ["TXT", "PDF", "WORD"],
-            key="export_format"
-        )
-
         report_text = st.session_state.writer_report
 
-        if export_format == "TXT":
-            st.download_button(
-                label="⬇️ Download TXT",
-                data=report_text,
-                file_name="research_report.txt",
-                mime="text/plain"
-            )
+        # ===== EXPORT SECTION =====
+        # Center the export button using columns
+        _, export_col, _ = st.columns([1, 1, 1])
+        with export_col:
+            if st.button("📤 Export Report", key="export_toggle", use_container_width=True):
+                st.session_state.export_expanded = not st.session_state.export_expanded
 
-        elif export_format == "PDF":
-            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-            from reportlab.lib.pagesizes import A4
-            from reportlab.lib.units import inch
-            import io
+        # Generate PDF data
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.pagesizes import A4
+        import io
 
-            pdf_buffer = io.BytesIO()
+        pdf_buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            pdf_buffer, pagesize=A4,
+            rightMargin=50, leftMargin=50,
+            topMargin=50, bottomMargin=50
+        )
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle("TitleStyle", parent=styles["Title"], fontSize=20, spaceAfter=20)
+        heading_style = ParagraphStyle("HeadingStyle", parent=styles["Heading2"], fontSize=14, spaceBefore=16, spaceAfter=8)
+        body_style = ParagraphStyle("BodyStyle", parent=styles["Normal"], fontSize=11, leading=16, spaceAfter=8)
 
-            doc = SimpleDocTemplate(
-                pdf_buffer,
-                pagesize=A4,
-                rightMargin=50,
-                leftMargin=50,
-                topMargin=50,
-                bottomMargin=50
-            )
+        story = []
+        for line in report_text.split("\n"):
+            line = line.strip()
+            if not line:
+                story.append(Spacer(1, 12))
+                continue
+            if line.startswith("# "):
+                story.append(Paragraph(line[2:], title_style))
+            elif line.startswith("## "):
+                story.append(Spacer(1, 12))
+                story.append(Paragraph(line[3:], heading_style))
+            elif line.startswith("### "):
+                story.append(Spacer(1, 10))
+                story.append(Paragraph(f"<b>{line[4:]}</b>", body_style))
+            elif line.startswith("- "):
+                story.append(Paragraph(f"• {line[2:]}", body_style))
+            else:
+                story.append(Paragraph(line, body_style))
+        doc.build(story)
+        pdf_buffer.seek(0)
 
-            styles = getSampleStyleSheet()
+        # Generate WORD data
+        from docx import Document
+        word_doc = Document()
+        for line in report_text.split("\n"):
+            word_doc.add_paragraph(line)
+        doc_buffer = io.BytesIO()
+        word_doc.save(doc_buffer)
+        doc_buffer.seek(0)
 
-            
-            title_style = ParagraphStyle(
-                "TitleStyle",
-                parent=styles["Title"],
-                fontSize=20,
-                spaceAfter=20
-            )
-
-            heading_style = ParagraphStyle(
-                "HeadingStyle",
-                parent=styles["Heading2"],
-                fontSize=14,
-                spaceBefore=16,
-                spaceAfter=8
-            )
-
-            body_style = ParagraphStyle(
-                "BodyStyle",
-                parent=styles["Normal"],
-                fontSize=11,
-                leading=16,     
-                spaceAfter=8
-            )
-
-            story = []
-
-            lines = report_text.split("\n")
-
-            for line in lines:
-                line = line.strip()
-
-                if not line:
-                    story.append(Spacer(1, 12))
-                    continue
-
-                if line.startswith("# "):
-                    story.append(Paragraph(line[2:], title_style))
-
-            
-                elif line.startswith("## "):
-                    story.append(Spacer(1, 12))
-                    story.append(Paragraph(line[3:], heading_style))
-
-            
-                elif line.startswith("### "):
-                    story.append(Spacer(1, 10))
-                    story.append(Paragraph(f"<b>{line[4:]}</b>", body_style))
-
-            
-                elif line.startswith("- "):
-                    story.append(Paragraph(f"• {line[2:]}", body_style))
-
-                else:
-                    story.append(Paragraph(line, body_style))
-
-            doc.build(story)
-            pdf_buffer.seek(0)
-
-            st.download_button(
-                label="⬇️ Download PDF",
-                data=pdf_buffer,
-                file_name="research_report.pdf",
-                mime="application/pdf"
-            )
-
-        elif export_format == "WORD":
-            from docx import Document
-            import io
-
-            doc = Document()
-            for line in report_text.split("\n"):
-                doc.add_paragraph(line)
-
-            doc_buffer = io.BytesIO()
-            doc.save(doc_buffer)
-            doc_buffer.seek(0)
-
-            st.download_button(
-                label="⬇️ Download Word",
-                data=doc_buffer,
-                file_name="research_report.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            )
+        # Show download buttons only if expanded
+        if st.session_state.export_expanded:
+            # 3 buttons side by side
+            btn1, btn2, btn3 = st.columns(3)
+            with btn1:
+                st.download_button(
+                    label="📄 Download TXT",
+                    data=report_text,
+                    file_name="research_report.txt",
+                    mime="text/plain",
+                    key="dl_txt"
+                )
+            with btn2:
+                st.download_button(
+                    label="📕 Download PDF",
+                    data=pdf_buffer,
+                    file_name="research_report.pdf",
+                    mime="application/pdf",
+                    key="dl_pdf"
+                )
+            with btn3:
+                st.download_button(
+                    label="📘 Download Word",
+                    data=doc_buffer,
+                    file_name="research_report.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    key="dl_word"
+                )
 
 
     else:
