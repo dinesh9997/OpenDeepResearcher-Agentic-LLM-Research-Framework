@@ -2,7 +2,9 @@
 
 > **An autonomous multi-agent research pipeline** that plans, retrieves, analyzes, and synthesizes technical documentation — powered by cloud-hosted LLMs and real-time web retrieval.
 
-[![Streamlit App](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
+**Live Demo:** [https://deepresearcher.streamlit.app/](https://deepresearcher.streamlit.app/)
+
+[![Streamlit App](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://deepresearcher.streamlit.app/)
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
 [![Groq](https://img.shields.io/badge/Groq-LLM_Inference-F55036?style=for-the-badge)](https://groq.com/)
 [![Tavily](https://img.shields.io/badge/Tavily-Search_API-0EA5E9?style=for-the-badge)](https://tavily.com/)
@@ -104,7 +106,7 @@ The application follows a **sequential multi-agent workflow**, where each agent 
 ### 1. Clone the Repository
 
 ```bash
-git clone -b GUJJU-DINESH https://github.com/dinesh9997/OpenDeepResearcher-Agentic-LLM-Research-Framework.git
+git clone https://github.com/dinesh9997/OpenDeepResearcher-Agentic-LLM-Research-Framework.git
 cd OpenDeepResearcher-Agentic-LLM-Research-Framework
 ```
 
@@ -148,7 +150,7 @@ The app will be available at `http://localhost:8501`
 
 1. Push this repository to GitHub
 2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Connect your repository → Branch: `GUJJU-DINESH`
+3. Connect your repository → Branch: `main`
 4. Set **Main file path**: `app.py`
 5. Add secrets in **Settings → Secrets**:
 
