@@ -5,14 +5,27 @@ from dotenv import load_dotenv
 # Load .env file (keeps API keys out of code)
 load_dotenv()
 
+
+# ---------------- HELPER ----------------
+def get_secret(key: str, default: str = "") -> str:
+    """Read from Streamlit secrets first, then fall back to env vars."""
+    try:
+        import streamlit as st
+        if key in st.secrets:
+            return st.secrets[key]
+    except Exception:
+        pass
+    return os.getenv(key, default)
+
+
 # ---------------- CONFIG ----------------
 # Cloud LLM provider (Groq — free, fast, OpenAI-compatible)
 # Set these as environment variables or Streamlit Cloud secrets
-BASE_URL = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
-LLM_API_KEY = os.getenv("LLM_API_KEY", "")
-MODEL_NAME = os.getenv("LLM_MODEL_NAME", "llama-3.1-8b-instant")
+BASE_URL = get_secret("LLM_BASE_URL", "https://api.groq.com/openai/v1")
+LLM_API_KEY = get_secret("LLM_API_KEY", "")
+MODEL_NAME = get_secret("LLM_MODEL_NAME", "llama-3.1-8b-instant")
 
-TAVILY_KEY = os.getenv("TAVILY_API_KEY", "")
+TAVILY_KEY = get_secret("TAVILY_API_KEY", "")
 
 
 # ---------------- LLM CALL ----------------
